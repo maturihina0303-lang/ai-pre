@@ -174,6 +174,10 @@ window.CONFIG = {
       <input type="text" class="text" id="fTitle" placeholder="例）Sora用 実写風の街並み生成プロンプト" maxlength="120">
     </label>
     <label class="field">
+      <span class="lab">投稿者名（任意）</span>
+      <input type="text" class="text" id="fAuthor" placeholder="例）ひなこ（空欄でもOK）" maxlength="40">
+    </label>
+    <label class="field">
       <span class="lab">ジャンル</span>
       <select class="text" id="fGenre"></select>
     </label>
@@ -196,7 +200,7 @@ window.CONFIG = {
 <script>
 (function(){
   "use strict";
-  const GENRES = ["動画生成","画像生成","楽曲生成","サムネ","編集","MOD","モデル","リソパ","その他"];
+  const GENRES = ["動画生成","画像生成","楽曲生成","サムネ","編集","MOD","モデル","リソパ","コマンド","データパック","マップ制作","その他"];
   const C = window.CONFIG;
 
   let sb = null;
@@ -336,7 +340,7 @@ window.CONFIG = {
     let list=posts.slice();
     if(activeGenre!=="すべて") list=list.filter(p=>p.genre===activeGenre);
     if(keyword){ const k=keyword.toLowerCase();
-      list=list.filter(p=>p.title.toLowerCase().includes(k) || (p.items||[]).some(it=>it.toLowerCase().includes(k))); }
+      list=list.filter(p=>p.title.toLowerCase().includes(k) || (p.author||"").toLowerCase().includes(k) || (p.items||[]).some(it=>it.toLowerCase().includes(k))); }
     if(list.length===0){
       grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="big">📝</div>
         <div>${posts.length===0?"まだ投稿がありません。「＋ 新規投稿」から追加してみましょう。":"条件に合う投稿が見つかりませんでした。"}</div></div>`;
@@ -348,6 +352,7 @@ window.CONFIG = {
         <h3>${esc(p.title)}</h3>
         <ul>${(p.items||[]).map(it=>`<li>${esc(it)}</li>`).join('')}</ul>
         <div class="meta">
+          <span>👤 ${esc(p.author && p.author.trim() ? p.author : "名無し")}</span>
           <span>${p.created_at===p.updated_at?"投稿":"更新"} ${fmtDate(p.updated_at)}</span>
           <span class="card-actions">
             <button class="btn ghost sm" data-act="copy" data-id="${p.id}">コピー</button>
@@ -391,6 +396,7 @@ window.CONFIG = {
     editingId = post ? post.id : null;
     document.getElementById('modalTitle').textContent = post ? "投稿を編集" : "新規投稿";
     document.getElementById('fTitle').value = post ? post.title : "";
+    document.getElementById('fAuthor').value = post ? (post.author||"") : "";
     document.getElementById('fGenre').value = post ? post.genre : GENRES[0];
     const box=document.getElementById('bullets'); box.innerHTML="";
     const items = post && post.items && post.items.length ? post.items : [""];
@@ -403,6 +409,7 @@ window.CONFIG = {
 
   async function saveForm(){
     const title=document.getElementById('fTitle').value.trim();
+    const author=document.getElementById('fAuthor').value.trim();
     const genre=document.getElementById('fGenre').value;
     const items=[...document.querySelectorAll('#bullets input')].map(i=>i.value.trim()).filter(Boolean);
     const err=document.getElementById('formErr');
@@ -411,8 +418,8 @@ window.CONFIG = {
     const saveBtn=document.getElementById('saveBtn'); saveBtn.disabled=true; saveBtn.textContent="保存中…";
     const nowISO=new Date().toISOString();
     let res;
-    if(editingId){ res=await sb.from('posts').update({title,genre,items,updated_at:nowISO}).eq('id',editingId); }
-    else { res=await sb.from('posts').insert({title,genre,items}); }
+    if(editingId){ res=await sb.from('posts').update({title,author,genre,items,updated_at:nowISO}).eq('id',editingId); }
+    else { res=await sb.from('posts').insert({title,author,genre,items}); }
     saveBtn.disabled=false; saveBtn.textContent="保存する";
     if(res.error){ err.textContent="保存に失敗しました: "+res.error.message; err.style.display="block"; return; }
     closeModal(); toast(editingId?"更新しました":"投稿しました"); fetchPosts();
