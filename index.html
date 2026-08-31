@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIプレ</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#181b26; --panel2:#1f2432; --line:#2b3242;
+    --text:#e7ecf3; --muted:#9aa6bd; --accent:#ff4d94; --accent2:#ff7ec2;
+    --danger:#ff6b6b; --ok:#3ecf8e; --chip:#232a3a;
+    --shadow:0 8px 30px rgba(0,0,0,.35); --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+    background:linear-gradient(180deg,#0d0f15,#0f1117 40%);
+    color:var(--text); line-height:1.6; min-height:100vh;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:24px 18px 80px;}
+
+  header.top{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:22px;}
+  .logo{width:44px;height:44px;border-radius:12px;flex:none;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;font-weight:800;font-size:20px;color:#fff;box-shadow:var(--shadow);}
+  .title-block h1{margin:0;font-size:22px;letter-spacing:.5px;}
+  .title-block p{margin:2px 0 0;color:var(--muted);font-size:13px;}
+  .spacer{flex:1;}
+  .btn{border:1px solid var(--line); background:var(--panel2); color:var(--text);
+    padding:10px 16px; border-radius:10px; font-size:14px; cursor:pointer; transition:.15s;
+    font-weight:600; display:inline-flex; align-items:center; gap:8px;}
+  .btn:hover{border-color:var(--accent); transform:translateY(-1px);}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:#fff;}
+  .btn.ghost{background:transparent;}
+  .btn.danger{color:var(--danger); border-color:transparent; background:transparent;}
+  .btn.danger:hover{background:rgba(255,107,122,.12); border-color:var(--danger);}
+  .btn.sm{padding:6px 12px; font-size:13px;}
+  .btn:disabled{opacity:.5; cursor:not-allowed; transform:none;}
+
+  .controls{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:16px;}
+  .search{flex:1; min-width:220px; display:flex; align-items:center; gap:8px;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:0 12px;}
+  .search input{flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:14px; padding:11px 0;}
+  .search svg{opacity:.6;flex:none;}
+
+  .genres{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;}
+  .genre-chip{padding:7px 14px; border-radius:999px; border:1px solid var(--line);
+    background:var(--chip); color:var(--muted); cursor:pointer; font-size:13px; font-weight:600; transition:.15s; user-select:none;}
+  .genre-chip:hover{color:var(--text); border-color:var(--accent);}
+  .genre-chip.active{background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border-color:transparent;}
+  .genre-chip .count{opacity:.7; font-size:11px; margin-left:5px;}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; display:flex; flex-direction:column; box-shadow:var(--shadow); transition:.15s;}
+  .card:hover{border-color:#39415a;}
+  .card .badge{align-self:flex-start; font-size:12px; padding:3px 10px; border-radius:999px;
+    background:var(--panel2); border:1px solid var(--line); color:var(--accent); font-weight:700; margin-bottom:10px;}
+  .card h3{margin:0 0 10px; font-size:17px; word-break:break-word;}
+  .card ul{margin:0 0 12px; padding-left:20px;}
+  .card ul li{margin-bottom:5px; color:#d4dbe8; word-break:break-word;}
+  .card .meta{color:var(--muted); font-size:12px; margin-top:auto; padding-top:8px; border-top:1px solid var(--line);
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .card-actions{display:flex; gap:6px; margin-left:auto;}
+  .copied{color:var(--ok)!important;}
+
+  .empty{text-align:center; color:var(--muted); padding:70px 20px; border:2px dashed var(--line); border-radius:var(--radius);}
+  .empty .big{font-size:40px; margin-bottom:8px;}
+
+  .overlay{position:fixed; inset:0; background:rgba(6,8,14,.7); backdrop-filter:blur(4px);
+    display:none; align-items:flex-start; justify-content:center; padding:30px 16px; z-index:50; overflow:auto;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    width:100%; max-width:600px; padding:24px; box-shadow:var(--shadow); margin:auto;}
+  .modal h2{margin:0 0 18px; font-size:19px;}
+  label.field{display:block; margin-bottom:16px;}
+  label.field .lab{display:block; font-size:13px; color:var(--muted); margin-bottom:6px; font-weight:600;}
+  input.text, select.text{width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:10px;
+    padding:11px 13px; color:var(--text); font-size:14px; outline:none; font-family:inherit;}
+  input.text:focus, select.text:focus{border-color:var(--accent);}
+  select.text{cursor:pointer;}
+
+  .bullets{display:flex; flex-direction:column; gap:8px;}
+  .bullet-row{display:flex; gap:8px; align-items:center;}
+  .bullet-row .dot{color:var(--accent); font-weight:800; flex:none;}
+  .bullet-row input{flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:9px;
+    padding:9px 12px; color:var(--text); font-size:14px; outline:none; font-family:inherit;}
+  .bullet-row input:focus{border-color:var(--accent);}
+  .bullet-row .rm{flex:none; width:32px; height:32px; border-radius:8px; border:1px solid var(--line);
+    background:transparent; color:var(--danger); cursor:pointer; font-size:16px;}
+  .bullet-row .rm:hover{background:rgba(255,107,122,.12);}
+  .add-bullet{margin-top:8px;}
+  .modal-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:22px;}
+  .err{color:var(--danger); font-size:13px; margin-top:-8px; margin-bottom:12px; display:none;}
+
+  /* gate / setup screens */
+  .center-screen{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+  .gate-box{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:30px;
+    max-width:440px; width:100%; box-shadow:var(--shadow);}
+  .gate-box .logo{margin:0 auto 16px;}
+  .gate-box h2{margin:0 0 6px; text-align:center; font-size:20px;}
+  .gate-box p{margin:0 0 20px; text-align:center; color:var(--muted); font-size:13px;}
+  .gate-box .row{display:flex; gap:8px;}
+  .code{background:#0c0e14; border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+    font-family:ui-monospace,Consolas,monospace; font-size:13px; word-break:break-all; color:var(--ok); margin-top:10px;}
+  .hint{font-size:12px; color:var(--muted); margin-top:14px; line-height:1.7;}
+  .hint b{color:var(--text);}
+
+  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--panel2); border:1px solid var(--line); padding:12px 20px; border-radius:10px;
+    box-shadow:var(--shadow); font-size:14px; z-index:100; opacity:0; transition:.25s; pointer-events:none;}
+  .toast.show{opacity:1; bottom:30px;}
+  .toast.err{border-color:var(--danger); color:var(--danger);}
+
+  footer{text-align:center; color:var(--muted); font-size:12px; margin-top:40px;}
+  .status{font-size:12px; color:var(--muted);}
+  @media(max-width:520px){.grid{grid-template-columns:1fr;} .card-actions{margin-left:0;}}
+</style>
+</head>
+<body>
+
+<!-- ==================== 設定：ここだけ書き換えてください ==================== -->
+<script>
+window.CONFIG = {
+  // ① Supabase の Project URL
+  SUPABASE_URL: "https://nifsvxpjaptwyobwxwxx.supabase.co",
+  // ② Supabase の Publishable キー（公開されて問題ないキーです）
+  SUPABASE_ANON_KEY: "sb_publishable_RtFWqEPMDJa0d9OjawBh6g_vAkcW7DS",
+  // ③ 合言葉のハッシュ（下の「初回セットアップ画面」で自動生成できます）
+  PASS_HASH: "9e263d67a4a1368f05503f64102120551ff3d69148a11a8884000d87aabd03b4"
+};
+</script>
+<!-- ====================================================================== -->
+
+<!-- ログイン/セットアップ画面 -->
+<div id="gate" class="center-screen" style="display:none;">
+  <div class="gate-box" id="gateBox"></div>
+</div>
+
+<!-- 本体 -->
+<div id="app" class="wrap" style="display:none;">
+  <header class="top">
+    <div class="logo">AI</div>
+    <div class="title-block">
+      <h1>AIプレ</h1>
+      <p>AIへの指示文テンプレートを投稿・検索・共有</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn ghost sm" id="refreshBtn" title="最新の投稿を読み込む">🔄 更新</button>
+    <button class="btn primary" id="newBtn">＋ 新規投稿</button>
+  </header>
+
+  <div class="controls">
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+      <input type="text" id="searchInput" placeholder="タイトル・本文からキーワード検索…">
+    </div>
+    <span class="status" id="statusText"></span>
+  </div>
+
+  <div class="genres" id="genreBar"></div>
+  <div class="grid" id="grid"></div>
+
+  <footer>URLと合言葉を知っている仲間内で共有してください</footer>
+</div>
+
+<!-- 投稿モーダル -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">新規投稿</h2>
+    <label class="field">
+      <span class="lab">タイトル</span>
+      <input type="text" class="text" id="fTitle" placeholder="例）Sora用 実写風の街並み生成プロンプト" maxlength="120">
+    </label>
+    <label class="field">
+      <span class="lab">ジャンル</span>
+      <select class="text" id="fGenre"></select>
+    </label>
+    <div class="field">
+      <span class="lab">テンプレート本文（箇条書き）</span>
+      <div class="bullets" id="bullets"></div>
+      <button class="btn ghost sm add-bullet" id="addBullet">＋ 箇条書きを追加</button>
+    </div>
+    <div class="err" id="formErr"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelBtn">キャンセル</button>
+      <button class="btn primary" id="saveBtn">保存する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+  const GENRES = ["動画生成","画像生成","楽曲生成","サムネ","編集","MOD","モデル","リソパ","その他"];
+  const C = window.CONFIG;
+
+  let sb = null;
+  let posts = [];
+  let activeGenre = "すべて";
+  let keyword = "";
+  let editingId = null;
+
+  // ---------- utils ----------
+  function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmtDate(ts){
+    const d=new Date(ts); const p=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  async function sha256(str){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  function toast(msg,isErr){
+    const t=document.getElementById('toast'); t.textContent=msg;
+    t.className='toast show'+(isErr?' err':''); setTimeout(()=>t.className='toast'+(isErr?' err':''),2200);
+  }
+
+  // ---------- boot ----------
+  window.addEventListener('DOMContentLoaded', init);
+
+  function init(){
+    const configured = C.SUPABASE_URL && C.SUPABASE_ANON_KEY;
+    if(!configured || !C.PASS_HASH){ showSetup(!configured); return; }
+    if(sessionStorage.getItem('unlocked')==='1'){ startApp(); }
+    else showLogin();
+  }
+
+  // ---------- setup screen ----------
+  function showSetup(needsSupabase){
+    document.getElementById('gate').style.display='flex';
+    const box=document.getElementById('gateBox');
+    box.innerHTML = `
+      <div class="logo">AI</div>
+      <h2>初回セットアップ</h2>
+      <p>このサイトを共有で使うための準備です</p>
+      ${needsSupabase ? `
+        <div class="hint" style="margin-top:0;">
+          <b>STEP 1｜保存先(Supabase)の設定がまだです。</b><br>
+          同じフォルダの「セットアップ手順」を見ながら、このHTMLファイル上部の
+          <b>CONFIG</b> に <b>SUPABASE_URL</b> と <b>SUPABASE_ANON_KEY</b> を貼り付けて保存してください。
+        </div>` : ``}
+      <div class="hint">
+        <b>STEP 2｜合言葉を決める。</b><br>
+        使いたい合言葉を入力して「ハッシュを生成」を押し、表示された文字列を
+        HTMLファイル上部の <b>PASS_HASH</b> に貼り付けて保存してください。
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <input type="text" class="text" id="setPass" placeholder="決めたい合言葉を入力">
+        <button class="btn primary" id="genHash" style="white-space:nowrap;">生成</button>
+      </div>
+      <div id="hashOut" style="display:none;">
+        <div class="hint" style="margin-bottom:4px;">↓これを PASS_HASH: "..." の中に貼り付け</div>
+        <div class="code" id="hashCode"></div>
+      </div>`;
+    document.getElementById('genHash').onclick = async ()=>{
+      const v=document.getElementById('setPass').value.trim();
+      if(!v){ toast('合言葉を入力してください',true); return; }
+      const h=await sha256(v);
+      document.getElementById('hashOut').style.display='block';
+      document.getElementById('hashCode').textContent=h;
+    };
+  }
+
+  // ---------- login screen ----------
+  function showLogin(){
+    document.getElementById('gate').style.display='flex';
+    const box=document.getElementById('gateBox');
+    box.innerHTML = `
+      <div class="logo">AI</div>
+      <h2>AIプレ</h2>
+      <p>合言葉を入力してください</p>
+      <div class="row">
+        <input type="password" class="text" id="loginPass" placeholder="合言葉" autofocus>
+        <button class="btn primary" id="loginBtn">入室</button>
+      </div>
+      <div class="err" id="loginErr" style="margin-top:10px;">合言葉が違います</div>`;
+    const submit = async ()=>{
+      const v=document.getElementById('loginPass').value;
+      const h=await sha256(v);
+      if(h===C.PASS_HASH){ sessionStorage.setItem('unlocked','1'); document.getElementById('gate').style.display='none'; startApp(); }
+      else { document.getElementById('loginErr').style.display='block'; }
+    };
+    document.getElementById('loginBtn').onclick=submit;
+    document.getElementById('loginPass').addEventListener('keydown',e=>{ if(e.key==='Enter') submit(); });
+  }
+
+  // ---------- app ----------
+  function startApp(){
+    sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
+    document.getElementById('app').style.display='block';
+
+    const fGenre=document.getElementById('fGenre');
+    GENRES.forEach(g=>{ const o=document.createElement('option'); o.value=g; o.textContent=g; fGenre.appendChild(o); });
+
+    document.getElementById('newBtn').onclick=()=>openModal(null);
+    document.getElementById('cancelBtn').onclick=closeModal;
+    document.getElementById('saveBtn').onclick=saveForm;
+    document.getElementById('refreshBtn').onclick=fetchPosts;
+    document.getElementById('addBullet').onclick=()=>{ addBulletRow(''); focusLastBullet(); };
+    document.getElementById('overlay').onclick=e=>{ if(e.target.id==='overlay') closeModal(); };
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape' && document.getElementById('overlay').classList.contains('show')) closeModal(); });
+    document.getElementById('searchInput').oninput=e=>{ keyword=e.target.value.trim(); renderGrid(); };
+    window.addEventListener('focus', fetchPosts);
+    setInterval(fetchPosts, 25000);
+
+    fetchPosts();
+  }
+
+  async function fetchPosts(){
+    setStatus('読み込み中…');
+    const { data, error } = await sb.from('posts').select('*').order('updated_at',{ascending:false});
+    if(error){ setStatus('通信エラー'); toast('読み込みに失敗しました: '+error.message,true); return; }
+    posts = (data||[]).map(r=>({ ...r, items: Array.isArray(r.items)? r.items : (r.items? JSON.parse(r.items):[]) }));
+    setStatus(`全 ${posts.length} 件`);
+    renderGenres(); renderGrid();
+  }
+  function setStatus(t){ document.getElementById('statusText').textContent=t; }
+
+  function renderGenres(){
+    const bar=document.getElementById('genreBar');
+    const all=["すべて",...GENRES];
+    bar.innerHTML = all.map(g=>{
+      const cnt = g==="すべて" ? posts.length : posts.filter(p=>p.genre===g).length;
+      return `<div class="genre-chip ${g===activeGenre?'active':''}" data-g="${esc(g)}">${esc(g)}<span class="count">${cnt}</span></div>`;
+    }).join('');
+    bar.querySelectorAll('.genre-chip').forEach(el=>{ el.onclick=()=>{ activeGenre=el.dataset.g; renderGenres(); renderGrid(); }; });
+  }
+
+  function renderGrid(){
+    const grid=document.getElementById('grid');
+    let list=posts.slice();
+    if(activeGenre!=="すべて") list=list.filter(p=>p.genre===activeGenre);
+    if(keyword){ const k=keyword.toLowerCase();
+      list=list.filter(p=>p.title.toLowerCase().includes(k) || (p.items||[]).some(it=>it.toLowerCase().includes(k))); }
+    if(list.length===0){
+      grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="big">📝</div>
+        <div>${posts.length===0?"まだ投稿がありません。「＋ 新規投稿」から追加してみましょう。":"条件に合う投稿が見つかりませんでした。"}</div></div>`;
+      return;
+    }
+    grid.innerHTML=list.map(p=>`
+      <div class="card">
+        <span class="badge">${esc(p.genre)}</span>
+        <h3>${esc(p.title)}</h3>
+        <ul>${(p.items||[]).map(it=>`<li>${esc(it)}</li>`).join('')}</ul>
+        <div class="meta">
+          <span>${p.created_at===p.updated_at?"投稿":"更新"} ${fmtDate(p.updated_at)}</span>
+          <span class="card-actions">
+            <button class="btn ghost sm" data-act="copy" data-id="${p.id}">コピー</button>
+            <button class="btn ghost sm" data-act="edit" data-id="${p.id}">編集</button>
+            <button class="btn danger sm" data-act="del" data-id="${p.id}">削除</button>
+          </span>
+        </div>
+      </div>`).join('');
+    grid.querySelectorAll('button[data-act]').forEach(b=>{ b.onclick=()=>handleAction(b.dataset.act,b.dataset.id,b); });
+  }
+
+  async function handleAction(act,id,btn){
+    const p=posts.find(x=>String(x.id)===String(id)); if(!p) return;
+    if(act==="copy"){
+      const text=(p.items||[]).map(it=>"・"+it).join("\n");
+      try{ await navigator.clipboard.writeText(text);
+        const old=btn.textContent; btn.textContent="コピー済"; btn.classList.add('copied');
+        setTimeout(()=>{btn.textContent=old; btn.classList.remove('copied');},1200);
+      }catch(e){ toast('コピーに失敗しました',true); }
+    } else if(act==="edit"){ openModal(p); }
+    else if(act==="del"){
+      if(!confirm(`「${p.title}」を削除しますか？`)) return;
+      const { error }=await sb.from('posts').delete().eq('id',id);
+      if(error){ toast('削除に失敗しました: '+error.message,true); return; }
+      toast('削除しました'); fetchPosts();
+    }
+  }
+
+  // ---------- modal ----------
+  function focusLastBullet(){ const box=document.getElementById('bullets'); box.lastChild.querySelector('input').focus(); }
+  function addBulletRow(value){
+    const box=document.getElementById('bullets');
+    const row=document.createElement('div'); row.className='bullet-row';
+    row.innerHTML=`<span class="dot">・</span><input type="text" placeholder="指示文を1項目ずつ入力"><button class="rm" title="削除">×</button>`;
+    row.querySelector('input').value=value||"";
+    row.querySelector('.rm').onclick=()=>{ if(box.children.length>1) row.remove(); else row.querySelector('input').value=""; };
+    row.querySelector('input').addEventListener('keydown',e=>{ if(e.key==="Enter"){ e.preventDefault(); addBulletRow(""); focusLastBullet(); } });
+    box.appendChild(row);
+  }
+  function openModal(post){
+    editingId = post ? post.id : null;
+    document.getElementById('modalTitle').textContent = post ? "投稿を編集" : "新規投稿";
+    document.getElementById('fTitle').value = post ? post.title : "";
+    document.getElementById('fGenre').value = post ? post.genre : GENRES[0];
+    const box=document.getElementById('bullets'); box.innerHTML="";
+    const items = post && post.items && post.items.length ? post.items : [""];
+    items.forEach(it=>addBulletRow(it));
+    document.getElementById('formErr').style.display="none";
+    document.getElementById('overlay').classList.add('show');
+    document.getElementById('fTitle').focus();
+  }
+  function closeModal(){ document.getElementById('overlay').classList.remove('show'); editingId=null; }
+
+  async function saveForm(){
+    const title=document.getElementById('fTitle').value.trim();
+    const genre=document.getElementById('fGenre').value;
+    const items=[...document.querySelectorAll('#bullets input')].map(i=>i.value.trim()).filter(Boolean);
+    const err=document.getElementById('formErr');
+    if(!title){ err.textContent="タイトルを入力してください。"; err.style.display="block"; return; }
+    if(items.length===0){ err.textContent="箇条書きを1つ以上入力してください。"; err.style.display="block"; return; }
+    const saveBtn=document.getElementById('saveBtn'); saveBtn.disabled=true; saveBtn.textContent="保存中…";
+    const nowISO=new Date().toISOString();
+    let res;
+    if(editingId){ res=await sb.from('posts').update({title,genre,items,updated_at:nowISO}).eq('id',editingId); }
+    else { res=await sb.from('posts').insert({title,genre,items}); }
+    saveBtn.disabled=false; saveBtn.textContent="保存する";
+    if(res.error){ err.textContent="保存に失敗しました: "+res.error.message; err.style.display="block"; return; }
+    closeModal(); toast(editingId?"更新しました":"投稿しました"); fetchPosts();
+  }
+})();
+</script>
+</body>
+</html>
