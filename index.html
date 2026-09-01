@@ -82,7 +82,11 @@
   select.text{cursor:pointer;}
 
   .bullets{display:flex; flex-direction:column; gap:8px;}
-  .bullet-row{display:flex; gap:8px; align-items:center;}
+  .bullet-row{display:flex; gap:8px; align-items:center; background:transparent; border-radius:9px;}
+  .bullet-row .drag{flex:none; cursor:grab; color:var(--muted); font-size:18px; line-height:1;
+    touch-action:none; user-select:none; padding:4px 2px;}
+  .bullet-row .drag:active{cursor:grabbing;}
+  .bullet-row.dragging{opacity:.55; background:var(--panel2); box-shadow:var(--shadow);}
   .bullet-row .dot{color:var(--accent); font-weight:800; flex:none;}
   .bullet-row input{flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:9px;
     padding:9px 12px; color:var(--text); font-size:14px; outline:none; font-family:inherit;}
@@ -386,11 +390,46 @@ window.CONFIG = {
   function addBulletRow(value){
     const box=document.getElementById('bullets');
     const row=document.createElement('div'); row.className='bullet-row';
-    row.innerHTML=`<span class="dot">・</span><input type="text" placeholder="指示文を1項目ずつ入力"><button class="rm" title="削除">×</button>`;
+    row.innerHTML=`<span class="drag" title="ドラッグで並べ替え">⠿</span><span class="dot">・</span><input type="text" placeholder="指示文を1項目ずつ入力"><button class="rm" title="削除">×</button>`;
     row.querySelector('input').value=value||"";
     row.querySelector('.rm').onclick=()=>{ if(box.children.length>1) row.remove(); else row.querySelector('input').value=""; };
     row.querySelector('input').addEventListener('keydown',e=>{ if(e.key==="Enter"){ e.preventDefault(); addBulletRow(""); focusLastBullet(); } });
+    const handle=row.querySelector('.drag');
+    handle.addEventListener('pointerdown',e=>startDrag(e,row,handle));
     box.appendChild(row);
+  }
+
+  // 箇条書きのドラッグ並べ替え（マウス／タッチ両対応）
+  function rowAfter(box,y){
+    const rows=[...box.querySelectorAll('.bullet-row:not(.dragging)')];
+    let best=null, bestOffset=-Infinity;
+    for(const r of rows){
+      const box2=r.getBoundingClientRect();
+      const offset=y-box2.top-box2.height/2;
+      if(offset<0 && offset>bestOffset){ bestOffset=offset; best=r; }
+    }
+    return best;
+  }
+  function startDrag(e,row,handle){
+    e.preventDefault();
+    const box=document.getElementById('bullets');
+    row.classList.add('dragging');
+    try{ handle.setPointerCapture(e.pointerId); }catch(_){}
+    const move=(ev)=>{
+      const after=rowAfter(box,ev.clientY);
+      if(after==null) box.appendChild(row);
+      else if(after!==row) box.insertBefore(row,after);
+    };
+    const up=()=>{
+      row.classList.remove('dragging');
+      try{ handle.releasePointerCapture(e.pointerId); }catch(_){}
+      handle.removeEventListener('pointermove',move);
+      handle.removeEventListener('pointerup',up);
+      handle.removeEventListener('pointercancel',up);
+    };
+    handle.addEventListener('pointermove',move);
+    handle.addEventListener('pointerup',up);
+    handle.addEventListener('pointercancel',up);
   }
   function openModal(post){
     editingId = post ? post.id : null;
