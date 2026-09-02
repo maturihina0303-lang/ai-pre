@@ -92,10 +92,6 @@
   .bullet-placeholder{border:2px dashed var(--accent); border-radius:9px;
     background:rgba(255,77,148,.10); box-sizing:border-box;}
   .bullet-row .dot{color:var(--accent); font-weight:800; flex:none;}
-  .bullet-row .mv{flex:none; width:30px; height:32px; border-radius:8px; border:1px solid var(--line);
-    background:transparent; color:var(--muted); cursor:pointer; font-size:11px; display:grid; place-items:center;}
-  .bullet-row .mv:hover:not(:disabled){color:var(--text); border-color:var(--accent);}
-  .bullet-row .mv:disabled{opacity:.3; cursor:not-allowed;}
   .bullet-row input{flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:9px;
     padding:9px 12px; color:var(--text); font-size:14px; outline:none; font-family:inherit;}
   .bullet-row input:focus{border-color:var(--accent);}
@@ -400,28 +396,13 @@ window.CONFIG = {
     const row=document.createElement('div'); row.className='bullet-row';
     row.innerHTML=`<span class="drag" title="ドラッグで並べ替え">⠿</span><span class="dot">・</span>`
       +`<input type="text" placeholder="指示文を1項目ずつ入力">`
-      +`<button class="mv up" title="上へ移動">▲</button>`
-      +`<button class="mv down" title="下へ移動">▼</button>`
       +`<button class="rm" title="削除">×</button>`;
     row.querySelector('input').value=value||"";
-    row.querySelector('.rm').onclick=()=>{ if(box.children.length>1){ row.remove(); updateMoveButtons(); } else row.querySelector('input').value=""; };
-    row.querySelector('.up').onclick=()=>{ const prev=row.previousElementSibling; if(prev){ box.insertBefore(row,prev); updateMoveButtons(); } };
-    row.querySelector('.down').onclick=()=>{ const next=row.nextElementSibling; if(next){ box.insertBefore(next,row); updateMoveButtons(); } };
+    row.querySelector('.rm').onclick=()=>{ if(box.children.length>1){ row.remove(); } else row.querySelector('input').value=""; };
     row.querySelector('input').addEventListener('keydown',e=>{ if(e.key==="Enter"){ e.preventDefault(); addBulletRow(""); focusLastBullet(); } });
     const handle=row.querySelector('.drag');
     handle.addEventListener('pointerdown',e=>startDrag(e,row,handle));
     box.appendChild(row);
-    updateMoveButtons();
-  }
-
-  // 上下ボタンの有効/無効を先頭・末尾に合わせて更新
-  function updateMoveButtons(){
-    const rows=[...document.querySelectorAll('#bullets .bullet-row')];
-    rows.forEach((r,i)=>{
-      const up=r.querySelector('.up'), dn=r.querySelector('.down');
-      if(up) up.disabled = (i===0);
-      if(dn) dn.disabled = (i===rows.length-1);
-    });
   }
 
   // 箇条書きのドラッグ並べ替え（フロート追従・複数飛び越し可／マウス・タッチ両対応）
@@ -462,7 +443,6 @@ window.CONFIG = {
       ph.remove();
       row.classList.remove('dragging');
       row.style.cssText='';       // 浮かせるための指定を解除
-      updateMoveButtons();
       try{ handle.releasePointerCapture(e.pointerId); }catch(_){}
       handle.removeEventListener('pointermove',move);
       handle.removeEventListener('pointerup',end);
