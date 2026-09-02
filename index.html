@@ -6,16 +6,16 @@
 <title>AIプレ</title>
 <style>
   :root{
-    --bg:#fff5fa; --panel:#ffffff; --panel2:#fff1f7; --line:#f7d6e6;
-    --text:#4a2f3d; --muted:#a06d86; --accent:#ff4d94; --accent2:#ff7ec2;
-    --danger:#ff5d7a; --ok:#2eb87f; --chip:#ffe6f1;
+    --bg:#fdf1f5; --panel:#ffffff; --panel2:#fdeef4; --line:#f1cdda;
+    --text:#4a2530; --muted:#9c6076; --accent:#c23a6a; --accent2:#dd5c86;
+    --danger:#e04b62; --ok:#2eb87f; --chip:#fbe0ea;
     --shadow:0 10px 30px rgba(214,120,160,.22); --radius:14px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,system-ui,sans-serif;
-    background:linear-gradient(180deg,#ffe6f2,#fff5fa 40%);
+    background:linear-gradient(180deg,#ffdCe8,#fdf1f5 42%);
     color:var(--text); line-height:1.6; min-height:100vh;
   }
   .wrap{max-width:1080px; margin:0 auto; padding:24px 18px 80px;}
@@ -54,7 +54,7 @@
   .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px;}
   .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
     padding:18px; display:flex; flex-direction:column; box-shadow:var(--shadow); transition:.15s;}
-  .card:hover{border-color:#f3a9cd;}
+  .card:hover{border-color:#e38aac;}
   .card .badge{align-self:flex-start; font-size:12px; padding:3px 10px; border-radius:999px;
     background:var(--panel2); border:1px solid var(--line); color:var(--accent); font-weight:700; margin-bottom:10px;}
   .card h3{margin:0 0 10px; font-size:17px; word-break:break-word;}
