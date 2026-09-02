@@ -87,7 +87,10 @@
     touch-action:none; user-select:none; padding:6px 4px; border-radius:6px;}
   .bullet-row .drag:hover{color:var(--text); background:var(--panel2);}
   .bullet-row .drag:active{cursor:grabbing;}
-  .bullet-row.dragging{opacity:.55; background:var(--panel2); box-shadow:var(--shadow);}
+  .bullet-row.dragging{background:var(--panel); border:1px solid var(--accent);
+    box-shadow:0 12px 30px rgba(0,0,0,.55); z-index:999; opacity:.98;}
+  .bullet-placeholder{border:2px dashed var(--accent); border-radius:9px;
+    background:rgba(255,77,148,.10); box-sizing:border-box;}
   .bullet-row .dot{color:var(--accent); font-weight:800; flex:none;}
   .bullet-row .mv{flex:none; width:30px; height:32px; border-radius:8px; border:1px solid var(--line);
     background:transparent; color:var(--muted); cursor:pointer; font-size:11px; display:grid; place-items:center;}
@@ -421,39 +424,53 @@ window.CONFIG = {
     });
   }
 
-  // 箇条書きのドラッグ並べ替え（マウス／タッチ両対応）
-  function rowAfter(box,y){
-    const rows=[...box.querySelectorAll('.bullet-row:not(.dragging)')];
-    let best=null, bestOffset=-Infinity;
-    for(const r of rows){
-      const box2=r.getBoundingClientRect();
-      const offset=y-box2.top-box2.height/2;
-      if(offset<0 && offset>bestOffset){ bestOffset=offset; best=r; }
-    }
-    return best;
-  }
+  // 箇条書きのドラッグ並べ替え（フロート追従・複数飛び越し可／マウス・タッチ両対応）
   function startDrag(e,row,handle){
     e.preventDefault();
     const box=document.getElementById('bullets');
+    const rect=row.getBoundingClientRect();
+    const grabY=e.clientY-rect.top;
+
+    // 元の位置に「落下先の目印」を置く
+    const ph=document.createElement('div');
+    ph.className='bullet-placeholder';
+    ph.style.height=rect.height+'px';
+    box.insertBefore(ph,row);
+
+    // つかんだ行を画面に浮かせて指に追従させる
     row.classList.add('dragging');
+    row.style.width=rect.width+'px';
+    row.style.height=rect.height+'px';
+    row.style.position='fixed';
+    row.style.left=rect.left+'px';
+    row.style.top=rect.top+'px';
+
     try{ handle.setPointerCapture(e.pointerId); }catch(_){}
+
     const move=(ev)=>{
-      const after=rowAfter(box,ev.clientY);
-      if(after==null) box.appendChild(row);
-      else if(after!==row) box.insertBefore(row,after);
-      updateMoveButtons();
+      row.style.top=(ev.clientY-grabY)+'px';
+      const sibs=[...box.children].filter(c=>c!==row && c!==ph);
+      let placed=false;
+      for(const s of sibs){
+        const r=s.getBoundingClientRect();
+        if(ev.clientY < r.top + r.height/2){ box.insertBefore(ph,s); placed=true; break; }
+      }
+      if(!placed) box.appendChild(ph);
     };
-    const up=()=>{
+    const end=()=>{
+      box.insertBefore(row,ph);   // 目印の位置に確定
+      ph.remove();
       row.classList.remove('dragging');
+      row.style.cssText='';       // 浮かせるための指定を解除
       updateMoveButtons();
       try{ handle.releasePointerCapture(e.pointerId); }catch(_){}
       handle.removeEventListener('pointermove',move);
-      handle.removeEventListener('pointerup',up);
-      handle.removeEventListener('pointercancel',up);
+      handle.removeEventListener('pointerup',end);
+      handle.removeEventListener('pointercancel',end);
     };
     handle.addEventListener('pointermove',move);
-    handle.addEventListener('pointerup',up);
-    handle.addEventListener('pointercancel',up);
+    handle.addEventListener('pointerup',end);
+    handle.addEventListener('pointercancel',end);
   }
   function openModal(post){
     editingId = post ? post.id : null;
